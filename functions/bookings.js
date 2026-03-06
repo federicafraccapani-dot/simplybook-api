@@ -46,7 +46,7 @@ export async function onRequestGet(context) {
     },
     body:JSON.stringify({
       jsonrpc:"2.0",
-      method:"getBookings",
+      method:"getBookingsList",
       params:[{
         date_from:"2026-04-17",
         date_to:"2026-04-18"
@@ -73,6 +73,7 @@ export async function onRequestGet(context) {
   );
 
 }
+
 
 
 
