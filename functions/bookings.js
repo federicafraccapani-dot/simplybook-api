@@ -10,7 +10,7 @@ export async function onRequestGet(context) {
   try {
 
     const url = new URL(context.request.url);
-    const clientId = url.searchParams.get("clientId");
+    const clientId = parseInt(url.searchParams.get("clientId"));
 
     if(!clientId){
       return new Response(JSON.stringify({
@@ -112,5 +112,6 @@ async function md5(str){
   return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
 
 }
+
 
 
