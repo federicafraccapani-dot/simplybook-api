@@ -53,10 +53,14 @@ export async function onRequestGet(context) {
     }
   );
 
-  const data = await bookings.json();
+  cconst data = await bookings.json();
+
+const filtered = Object.values(data.result || {}).filter(
+  b => parseInt(b.client_id) === clientId
+);
 
 return new Response(
-  JSON.stringify(data),
+  JSON.stringify(filtered),
   {
     headers:{
       "Content-Type":"application/json",
@@ -66,4 +70,5 @@ return new Response(
 );
 
 }
+
 
