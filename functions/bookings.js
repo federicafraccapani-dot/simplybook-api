@@ -19,6 +19,10 @@ export async function onRequestGet(context) {
     }
 
 
+    const COMPANY_LOGIN = "micemore";
+    const API_KEY = "047b3e6349938ce1f4b8e84e4b357bb8eb6de3968fcc9a5788d125dbe2c0cf72";
+
+
     // STEP 1 — ottenere token
     const login = await fetch(
       "https://user-api.simplybook.me/login",
@@ -31,8 +35,8 @@ export async function onRequestGet(context) {
           jsonrpc:"2.0",
           method:"getToken",
           params:[
-            "micemore",
-            "047b3e6349938ce1f4b8e84e4b357bb8eb6de3968fcc9a5788d125dbe2c0cf72"
+            COMPANY_LOGIN,
+            API_KEY
           ],
           id:1
         })
@@ -43,9 +47,9 @@ export async function onRequestGet(context) {
     const token = loginData.result;
 
 
-    // STEP 2 — calcolo sign
-    import md5 from "crypto-js/md5";
-    const sign = md5(clientId + "API_KEY").toString();
+    // STEP 2 — calcolo sign (MD5)
+    const sign = await md5(clientId + API_KEY);
+
 
     // STEP 3 — prenotazioni cliente
     const bookings = await fetch(
@@ -54,7 +58,7 @@ export async function onRequestGet(context) {
         method:"POST",
         headers:{
           "Content-Type":"application/json",
-          "X-Company-Login":"micemore",
+          "X-Company-Login":COMPANY_LOGIN,
           "X-Token":token
         },
         body:JSON.stringify({
@@ -93,3 +97,17 @@ export async function onRequestGet(context) {
 
 }
 
+
+
+// funzione MD5 per Workers
+async function md5(str){
+
+  const encoder = new TextEncoder();
+  const data = encoder.encode(str);
+
+  const hashBuffer = await crypto.subtle.digest("MD5", data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+
+  return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+
+}
