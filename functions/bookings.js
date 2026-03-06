@@ -20,7 +20,8 @@ export async function onRequestGet(context) {
 
 
     const COMPANY_LOGIN = "micemore";
-    const API_KEY = "047b3e6349938ce1f4b8e84e4b357bb8eb6de3968fcc9a5788d125dbe2c0cf72";
+    const API_KEY = "047b3e6349938ce1f4b8e84e4b357bb8eb6de3968fcc9a5788d125dbe2c0cf72";    
+    const API_SECRET = "a8ebe7f3c807665fd36c0775cd1edea0c7ea19412a9137b41c5644ddab00dee8";
 
 
     // STEP 1 — ottenere token
@@ -48,7 +49,7 @@ export async function onRequestGet(context) {
 
 
     // STEP 2 — calcolo sign (MD5)
-    const sign = await md5(clientId + token);
+    const sign = await md5(clientId + API_SECRET);
 
 
     // STEP 3 — prenotazioni cliente
@@ -111,4 +112,5 @@ async function md5(str){
   return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
 
 }
+
 
