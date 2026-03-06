@@ -6,24 +6,24 @@ export async function onRequestGet() {
 
   // STEP 1 — login per ottenere il token
   const login = await fetch(
-    "https://user-api.simplybook.me/login",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
+  "https://user-api.simplybook.me/login",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      method: "getUserToken",
+      params: {
+        company: "micemore",
+        login: "gp@micemorevents.it",
+        password: "Micemore2026+"
       },
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        method: "getUserToken",
-        params: [
-          "micemore",
-          "gp@micemorevents.it",
-          "Micemore2026+"
-        ],
-        id: 1
-      })
-    }
-  );
+      id: 1
+    })
+  }
+);
 
   const loginData = await login.json();
   const token = loginData.result;
@@ -57,3 +57,4 @@ export async function onRequestGet() {
   });
 
 }
+
