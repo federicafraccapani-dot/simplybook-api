@@ -4,59 +4,90 @@
 /*company: "micemore",*/
         /*login: "gp@micemorevents.it",*/
         /*password: "Micemore2026+"*/
-const login = await fetch(
-  "https://user-api.simplybook.me/login",
-  {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      jsonrpc: "2.0",
-      method: "getUserToken",
-      params: [
-        {
-          company: "micemore",
-          login: "gp@micemorevents.it",
-          password: "Micemore2026+"
+
+export async function onRequestGet() {
+
+  try {
+
+    // STEP 1 — login e token
+    const login = await fetch(
+      "https://user-api.simplybook.me/login",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          method: "getUserToken",
+          params: [
+            {
+              company: "micemore",
+              login: "gp@micemorevents.it",
+              password: "Micemore2026+"
+            }
+          ],
+          id: 1
+        })
+      }
+    );
+
+    const loginData = await login.json();
+
+    if(!loginData.result){
+      return new Response(JSON.stringify(loginData), {
+        headers:{ "Content-Type":"application/json" }
+      });
+    }
+
+    const token = loginData.result;
+
+
+    // STEP 2 — recupero prenotazioni
+    const bookings = await fetch(
+      "https://user-api.simplybook.me/admin/",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Company-Login": "micemore",
+          "X-User-Token": token
+        },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          method: "getBookings",
+          params: [],
+          id: 2
+        })
+      }
+    );
+
+    const bookingsData = await bookings.json();
+
+
+    // STEP 3 — risposta
+    return new Response(
+      JSON.stringify(bookingsData),
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*"
         }
-      ],
-      id: 1
-    })
+      }
+    );
+
+  } catch (err) {
+
+    return new Response(
+      JSON.stringify({error:err.toString()}),
+      {
+        headers: {
+          "Content-Type":"application/json",
+          "Access-Control-Allow-Origin":"*"
+        }
+      }
+    );
+
   }
-);
-
-  const loginData = await login.json();
-  const token = loginData.result;
-
-  // STEP 2 — recuperare prenotazioni
-  const bookings = await fetch(
-    "https://user-api.simplybook.me/admin/",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Company-Login": "micemore",
-        "X-User-Token": token
-      },
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        method: "getBookings",
-        params: {},
-        id: 1
-      })
-    }
-  );
-
-  const data = await bookings.text();
-
-  return new Response(data, {
-    headers: {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*"
-    }
-  });
 
 }
-
-
