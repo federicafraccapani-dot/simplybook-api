@@ -55,10 +55,12 @@ export async function onRequestGet(context) {
       "X-User-Token":token
     },
     body: JSON.stringify({
-    jsonrpc: "2.0",
-    method: "getEventList",
-    params: [],
-    id: 2
+    jsonrpc:"2.0",
+    method:"getBookings",
+    params:[{
+      client_id: clientId
+    }],
+    id:2
   })
   }
 );
@@ -97,6 +99,7 @@ export async function onRequestGet(context) {
 );
 
 }
+
 
 
 
