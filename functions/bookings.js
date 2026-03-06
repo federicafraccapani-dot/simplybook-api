@@ -36,22 +36,25 @@ export async function onRequestGet(context) {
 
   // tutte le prenotazioni
   const bookings = await fetch(
-    "https://user-api.simplybook.me",
-    {
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json",
-        "X-Company-Login":COMPANY_LOGIN,
-        "X-Token":token
-      },
-      body:JSON.stringify({
-        jsonrpc:"2.0",
-        method:"getBookings",
-        params:[],
-        id:2
-      })
-    }
-  );
+  "https://user-api.simplybook.me",
+  {
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json",
+      "X-Company-Login":COMPANY_LOGIN,
+      "X-Token":token
+    },
+    body:JSON.stringify({
+      jsonrpc:"2.0",
+      method:"getBookings",
+      params:[{
+        date_from:"2026-04-17",
+        date_to:"2026-04-18"
+      }],
+      id:2
+    })
+  }
+);
 
   const data = await bookings.json();
 
@@ -70,6 +73,7 @@ export async function onRequestGet(context) {
   );
 
 }
+
 
 
 
