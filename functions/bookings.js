@@ -10,6 +10,13 @@ export async function onRequestGet(context) {
   const url = new URL(context.request.url);
   const clientId = parseInt(url.searchParams.get("clientId"));
 
+  if(!clientId){
+    return new Response(
+      JSON.stringify({ error:"clientId missing" }),
+      { headers:{ "Content-Type":"application/json" } }
+    );
+  }
+
   const COMPANY_LOGIN = "micemore";
   const API_KEY = "047b3e6349938ce1f4b8e84e4b357bb8eb6de3968fcc9a5788d125dbe2c0cf72";
 
@@ -73,6 +80,7 @@ export async function onRequestGet(context) {
   );
 
 }
+
 
 
 
