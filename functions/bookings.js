@@ -48,7 +48,7 @@ export async function onRequestGet(context) {
 
 
     // STEP 2 — calcolo sign (MD5)
-    const sign = await md5(clientId + API_KEY);
+    const sign = await md5(clientId + token);
 
 
     // STEP 3 — prenotazioni cliente
@@ -111,3 +111,4 @@ async function md5(str){
   return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
 
 }
+
