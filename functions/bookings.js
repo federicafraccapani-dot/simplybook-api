@@ -53,7 +53,7 @@ export async function onRequestGet(context) {
     }
   );
 
-  cconst data = await bookings.json();
+  const data = await bookings.json();
 
 const filtered = Object.values(data.result || {}).filter(
   b => parseInt(b.client_id) === clientId
@@ -70,5 +70,6 @@ return new Response(
 );
 
 }
+
 
 
