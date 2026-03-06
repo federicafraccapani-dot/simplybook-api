@@ -53,10 +53,10 @@ export async function onRequestGet(context) {
     },
     body:JSON.stringify({
       jsonrpc:"2.0",
-      method:"getBookingsList",
-      params:[{
-        date_from:"2026-04-17",
-        date_to:"2026-04-18"
+      method:"getBookings",
+     params: [{
+        client_id: clientId,
+        order: "date_start_asc"
       }],
       id:2
     })
@@ -85,6 +85,7 @@ export async function onRequestGet(context) {
 );
 
 }
+
 
 
 
