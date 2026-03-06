@@ -44,13 +44,8 @@ export async function onRequestGet(context) {
 
 
     // STEP 2 — calcolo sign
-    const encoder = new TextEncoder();
-    const data = encoder.encode(clientId + "047b3e6349938ce1f4b8e84e4b357bb8eb6de3968fcc9a5788d125dbe2c0cf72");
-
-    const hashBuffer = await crypto.subtle.digest("SHA-1", data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const sign = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
-
+    import md5 from "crypto-js/md5";
+    const sign = md5(clientId + "API_KEY").toString();
 
     // STEP 3 — prenotazioni cliente
     const bookings = await fetch(
@@ -97,3 +92,4 @@ export async function onRequestGet(context) {
   }
 
 }
+
