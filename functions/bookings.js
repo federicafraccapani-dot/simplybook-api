@@ -55,21 +55,22 @@ export async function onRequestGet(context) {
 
   const data = await bookings.json();
 
-const filtered = Object.values(data.result || {}).filter(
-  b => parseInt(b.client_id) === clientId
-);
-
-return new Response(
-  JSON.stringify(filtered),
-  {
-    headers:{
-      "Content-Type":"application/json",
-      "Access-Control-Allow-Origin":"*"
+  const filtered = Object.values(data.result || {}).filter(
+    b => parseInt(b.client_id) === clientId
+  );
+  
+  return new Response(
+    JSON.stringify(filtered),
+    {
+      headers:{
+        "Content-Type":"application/json",
+        "Access-Control-Allow-Origin":"*"
+      }
     }
-  }
-);
+  );
 
 }
+
 
 
 
