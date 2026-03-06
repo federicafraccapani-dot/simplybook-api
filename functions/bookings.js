@@ -67,7 +67,6 @@ export async function onRequestGet(context) {
           method:"getClientBookings",
           params:[
             clientId,
-            sign,
             {
               upcoming_only:false,
               confirmed_only:false
@@ -112,6 +111,7 @@ async function md5(str){
   return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
 
 }
+
 
 
 
