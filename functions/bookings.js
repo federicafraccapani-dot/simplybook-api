@@ -9,7 +9,7 @@ export async function onRequestGet() {
 
   try {
 
-    // STEP 1 — login
+    // STEP 1 — ottenere token
     const login = await fetch(
       "https://user-api.simplybook.me/login",
       {
@@ -18,46 +18,50 @@ export async function onRequestGet() {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          company: "micemore",
-          login: "gp@micemorevents.it",
-          password: "Micemore2026+"
+          jsonrpc: "2.0",
+          method: "getToken",
+          params: [
+            "micemore",
+            "047b3e6349938ce1f4b8e84e4b357bb8eb6de3968fcc9a5788d125dbe2c0cf72"
+          ],
+          id: 1
         })
       }
     );
 
     const loginData = await login.json();
 
-    if(!loginData.token){
+    if(!loginData.result){
       return new Response(JSON.stringify(loginData),{
         headers:{ "Content-Type":"application/json" }
       });
     }
 
-    const token = loginData.token;
+    const token = loginData.result;
 
 
-    // STEP 2 — getBookings
+    // STEP 2 — recuperare prenotazioni
     const bookings = await fetch(
-      "https://user-api.simplybook.me/admin/",
+      "https://user-api.simplybook.me",
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "X-Company-Login": "micemore",
-          "X-User-Token": token
+          "X-Token": token
         },
         body: JSON.stringify({
           jsonrpc: "2.0",
           method: "getBookings",
           params: [],
-          id: 1
+          id: 2
         })
       }
     );
 
-    const data = await bookings.text();
+    const bookingsData = await bookings.text();
 
-    return new Response(data,{
+    return new Response(bookingsData,{
       headers:{
         "Content-Type":"application/json",
         "Access-Control-Allow-Origin":"*"
