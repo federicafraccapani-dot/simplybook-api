@@ -15,7 +15,7 @@ export async function onRequestGet(context) {
 
   // token
   const login = await fetch(
-    "https://user-api.simplybook.me/login",
+    "https://user-api.simplybook.it/login",
     {
       method:"POST",
       headers:{ "Content-Type":"application/json" },
@@ -36,7 +36,7 @@ export async function onRequestGet(context) {
 
   // tutte le prenotazioni
   const bookings = await fetch(
-  "https://user-api.simplybook.me",
+  "https://user-api.simplybook.it",
   {
     method:"POST",
     headers:{
@@ -73,6 +73,7 @@ export async function onRequestGet(context) {
   );
 
 }
+
 
 
 
