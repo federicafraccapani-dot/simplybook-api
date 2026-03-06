@@ -18,25 +18,28 @@ export async function onRequestGet(context) {
   }
 
   const COMPANY_LOGIN = "micemore";
+  const USER_LOGIN = "gp@micemorevents.it";
+  const USER_PASSWORD = "Micemore2026+";
   const API_KEY = "047b3e6349938ce1f4b8e84e4b357bb8eb6de3968fcc9a5788d125dbe2c0cf72";
 
   // token
   const login = await fetch(
-    "https://user-api.simplybook.it/login",
-    {
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body:JSON.stringify({
-        jsonrpc:"2.0",
-        method:"getToken",
-        params:[
-          COMPANY_LOGIN,
-          API_KEY
-        ],
-        id:1
-      })
-    }
-  );
+  "https://user-api.simplybook.it/login",
+  {
+    method: "POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({
+      jsonrpc:"2.0",
+      method:"getUserToken",
+      params:[
+        COMPANY_LOGIN,
+        USER_LOGIN,
+        USER_PASSWORD
+      ],
+      id:1
+    })
+  }
+);
 
   const loginData = await login.json();
   const token = loginData.result;
@@ -49,7 +52,7 @@ export async function onRequestGet(context) {
     headers:{
       "Content-Type":"application/json",
       "X-Company-Login":COMPANY_LOGIN,
-      "X-Token":token
+      "X-User-Token":token
     },
     body: JSON.stringify({
     jsonrpc: "2.0",
@@ -94,6 +97,7 @@ export async function onRequestGet(context) {
 );
 
 }
+
 
 
 
