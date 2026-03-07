@@ -15,17 +15,23 @@ export async function onRequestGet(context) {
   const url = new URL(context.request.url);
   const providerAvailability = url.searchParams.get("providerAvailability");
 
-  /* =========================
-     PROVIDER AVAILABILITY API
-  ========================= */
+if (providerAvailability) {
 
- if (providerAvailability) {
-  /* getToken */
+  const COMPANY_LOGIN = context.env.COMPANY_LOGIN;
+  const API_KEY = context.env.API_KEY;
+
+  const SERVICE_ID = 2;
+  const DATE_FROM = "2026-04-17";
+  const DATE_TO = "2026-04-18";
+
+  /* =====================
+     GET TOKEN
+  ===================== */
 
   const login = await fetch(
     "https://user-api.simplybook.it/",
     {
-      method: "POST",
+      method:"POST",
       headers:{ "Content-Type":"application/json" },
       body: JSON.stringify({
         jsonrpc:"2.0",
@@ -39,9 +45,11 @@ export async function onRequestGet(context) {
   const loginData = await login.json();
   const token = loginData.result;
 
-  /* getUnitList */
+  /* =====================
+     GET SLOT MATRIX
+  ===================== */
 
-  const providers = await fetch(
+  const matrix = await fetch(
     "https://user-api.simplybook.it/",
     {
       method:"POST",
@@ -52,19 +60,37 @@ export async function onRequestGet(context) {
       },
       body: JSON.stringify({
         jsonrpc:"2.0",
-        method:"getUnitList",
-        params:[],
+        method:"getStartTimeMatrix",
+        params:{
+          service_id: SERVICE_ID,
+          date_from: DATE_FROM,
+          date_to: DATE_TO
+        },
         id:2
       })
     }
   );
 
-  const providerData = await providers.json();
+  const matrixData = await matrix.json();
 
   const result = {};
 
-  Object.values(providerData.result || {}).forEach(p => {
-    result[p.id] = p.qty || 0;
+  const providers = matrixData.result || {};
+
+  Object.keys(providers).forEach(providerId => {
+
+    let count = 0;
+
+    const days = providers[providerId];
+
+    Object.values(days).forEach(slots => {
+
+      count += slots.length;
+
+    });
+
+    result[providerId] = count;
+
   });
 
   return new Response(
@@ -152,6 +178,7 @@ export async function onRequestGet(context) {
   );
 
 }
+
 
 
 
