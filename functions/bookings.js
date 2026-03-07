@@ -43,7 +43,7 @@ export async function onRequestGet(context) {
 
     // lista unit/provider
     const providers = await fetch(
-      "https://user-api.simplybook.it/admin/",
+      "https://user-api.simplybook.it/",
       {
         method:"POST",
         headers:{
@@ -154,6 +154,7 @@ export async function onRequestGet(context) {
   );
 
 }
+
 
 
 
