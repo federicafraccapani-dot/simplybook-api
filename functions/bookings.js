@@ -54,27 +54,26 @@ if (providerAvailability) {
   ===================== */
 
   const matrix = await fetch(
-    "https://user-api.simplybook.it/",
-    {
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json",
-        "X-Company-Login":COMPANY_LOGIN,
-        "X-User-Token":token
+  "https://user-api.simplybook.it/admin/",
+  {
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json",
+      "X-Company-Login": COMPANY_LOGIN,
+      "X-User-Token": token
+    },
+    body: JSON.stringify({
+      jsonrpc:"2.0",
+      method:"getStartTimeMatrix",
+      params:{
+        service_id: SERVICE_ID,
+        date_from: DATE_FROM,
+        date_to: DATE_TO
       },
-      body: JSON.stringify({
-        jsonrpc:"2.0",
-        method:"getStartTimeMatrix",
-        params:{
-          service_id: SERVICE_ID,
-          date_from: DATE_FROM,
-          date_to: DATE_TO
-        },
-        id:2
-      })
-    }
-  );
-
+      id:2
+    })
+  }
+);
   const matrixData = await matrix.json();
 
 return new Response(
@@ -192,6 +191,7 @@ return new Response(
   );
 
 }
+
 
 
 
