@@ -73,6 +73,16 @@ if (providerAvailability) {
 
   const matrixData = await matrix.json();
 
+return new Response(
+  JSON.stringify(matrixData, null, 2),
+  {
+    headers:{
+      "Content-Type":"application/json",
+      "Access-Control-Allow-Origin":"*"
+    }
+  }
+);
+
   const result = {};
 
   const providers = matrixData.result || {};
@@ -178,6 +188,7 @@ if (providerAvailability) {
   );
 
 }
+
 
 
 
