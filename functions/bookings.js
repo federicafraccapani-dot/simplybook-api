@@ -7,10 +7,10 @@
 
 export async function onRequestGet(context) {
 
-  const COMPANY_LOGIN = "micemore";
-  const USER_LOGIN = "gp@micemorevents.it";
-  const USER_PASSWORD = "Micemore2026+";
-  const API_KEY = "047b3e6349938ce1f4b8e84e4b357bb8eb6de3968fcc9a5788d125dbe2c0cf72";
+  const COMPANY_LOGIN = context.env.COMPANY_LOGIN;
+  const USER_LOGIN = context.env.USER_LOGIN;
+  const USER_PASSWORD = context.env.USER_PASSWORD;
+  const API_KEY = context.env.API_KEY;
 
   const url = new URL(context.request.url);
 
@@ -154,6 +154,7 @@ export async function onRequestGet(context) {
   );
 
 }
+
 
 
 
