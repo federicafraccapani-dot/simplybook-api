@@ -8,6 +8,84 @@
 export async function onRequestGet(context) {
 
   const url = new URL(context.request.url);
+
+  /* =========================
+     PROVIDER AVAILABILITY API
+  ========================= */
+
+  if (url.pathname.includes("providerAvailability")) {
+
+    const COMPANY_LOGIN = "micemore";
+    const USER_LOGIN = "gp@micemorevents.it";
+    const USER_PASSWORD = "Micemore2026+";
+
+    // login
+    const login = await fetch(
+      "https://user-api.simplybook.it/login",
+      {
+        method: "POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({
+          jsonrpc:"2.0",
+          method:"getUserToken",
+          params:[
+            COMPANY_LOGIN,
+            USER_LOGIN,
+            USER_PASSWORD
+          ],
+          id:1
+        })
+      }
+    );
+
+    const loginData = await login.json();
+    const token = loginData.result;
+
+    // lista unit/provider
+    const providers = await fetch(
+      "https://user-api.simplybook.it/admin/",
+      {
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+          "X-Company-Login":COMPANY_LOGIN,
+          "X-User-Token":token
+        },
+        body: JSON.stringify({
+          jsonrpc:"2.0",
+          method:"getUnitList",
+          params:[],
+          id:2
+        })
+      }
+    );
+
+    const providerData = await providers.json();
+
+    const result = {};
+
+    Object.values(providerData.result || {}).forEach(p => {
+
+      result[p.id] = p.qty || 0;
+
+    });
+
+    return new Response(
+      JSON.stringify(result),
+      {
+        headers:{
+          "Content-Type":"application/json",
+          "Access-Control-Allow-Origin":"*"
+        }
+      }
+    );
+
+  }
+
+  /* =========================
+     BOOKING CLIENTE
+  ========================= */
+  
   const clientId = parseInt(url.searchParams.get("clientId"));
 
   if(!clientId){
@@ -82,6 +160,7 @@ export async function onRequestGet(context) {
   );
 
 }
+
 
 
 
