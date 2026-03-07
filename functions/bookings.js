@@ -13,6 +13,7 @@ export async function onRequestGet(context) {
   const API_KEY = context.env.API_KEY;
 
   const url = new URL(context.request.url);
+  console.log("PATH:", url.pathname);
 
   /* =========================
      PROVIDER AVAILABILITY API
@@ -158,6 +159,7 @@ export async function onRequestGet(context) {
   );
 
 }
+
 
 
 
