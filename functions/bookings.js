@@ -13,34 +13,25 @@ export async function onRequestGet(context) {
   const API_KEY = context.env.API_KEY;
 
   const url = new URL(context.request.url);
-  return new Response(
-  JSON.stringify({
-    pathname: url.pathname,
-    search: url.search
-  }),
-  { headers: { "Content-Type": "application/json" } }
-);
+  const providerAvailability = url.searchParams.get("providerAvailability");
 
   /* =========================
      PROVIDER AVAILABILITY API
   ========================= */
 
- if (url.pathname.includes("providerAvailability")) {
-
-    /* ========================
-     GET TOKEN (public API)
-  ======================== */
+ if (providerAvailability) {
+  /* getToken */
 
   const login = await fetch(
     "https://user-api.simplybook.it/",
     {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers:{ "Content-Type":"application/json" },
       body: JSON.stringify({
-        jsonrpc: "2.0",
-        method: "getToken",
-        params: [COMPANY_LOGIN, API_KEY],
-        id: 1
+        jsonrpc:"2.0",
+        method:"getToken",
+        params:[COMPANY_LOGIN, API_KEY],
+        id:1
       })
     }
   );
@@ -48,24 +39,22 @@ export async function onRequestGet(context) {
   const loginData = await login.json();
   const token = loginData.result;
 
-  /* ========================
-     GET UNIT LIST
-  ======================== */
+  /* getUnitList */
 
   const providers = await fetch(
     "https://user-api.simplybook.it/",
     {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Company-Login": COMPANY_LOGIN,
-        "X-Token": token
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "X-Company-Login":COMPANY_LOGIN,
+        "X-Token":token
       },
       body: JSON.stringify({
-        jsonrpc: "2.0",
-        method: "getUnitList",
-        params: [],
-        id: 2
+        jsonrpc:"2.0",
+        method:"getUnitList",
+        params:[],
+        id:2
       })
     }
   );
@@ -75,9 +64,7 @@ export async function onRequestGet(context) {
   const result = {};
 
   Object.values(providerData.result || {}).forEach(p => {
-
     result[p.id] = p.qty || 0;
-
   });
 
   return new Response(
@@ -165,6 +152,7 @@ export async function onRequestGet(context) {
   );
 
 }
+
 
 
 
