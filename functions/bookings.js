@@ -7,57 +7,80 @@
 
 export async function onRequestGet(context) {
 
+  const COMPANY_LOGIN = "micemore";
+  const USER_LOGIN = "gp@micemorevents.it";
+  const USER_PASSWORD = "Micemore2026+";
+  const API_KEY = "047b3e6349938ce1f4b8e84e4b357bb8eb6de3968fcc9a5788d125dbe2c0cf72";
+
   const url = new URL(context.request.url);
 
   /* =========================
      PROVIDER AVAILABILITY API
   ========================= */
 
-  if (url.pathname.includes("providerAvailability")) {
+ if (url.pathname.includes("providerAvailability")) {
 
-  const COMPANY_LOGIN = "micemore";
-  const API_KEY = "LA_TUA_API_KEY";
-
-  const providers = await fetch(
-    "https://user-api.simplybook.it/",
-    {
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json",
-        "X-Company-Login":COMPANY_LOGIN,
-        "X-API-Key":API_KEY
-      },
-      body: JSON.stringify({
-        jsonrpc:"2.0",
-        method:"getUnitList",
-        params:[],
-        id:2
-      })
-    }
-  );
-
-  const providerData = await providers.json();
-
-  const result = {};
-
-  Object.values(providerData.result || {}).forEach(p => {
-
-    result[p.id] = p.qty || 0;
-
-  });
-
-  return new Response(
-    JSON.stringify(result),
-    {
-      headers:{
-        "Content-Type":"application/json",
-        "Access-Control-Allow-Origin":"*"
+    // login
+    const login = await fetch(
+      "https://user-api.simplybook.it/login",
+      {
+        method: "POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({
+          jsonrpc:"2.0",
+          method:"getToken",
+          params:[
+            COMPANY_LOGIN,
+            API_KEY
+          ],
+          id:1
+        })
       }
-    }
-  );
+    );
 
-}
+    const loginData = await login.json();
+    const token = loginData.result;
 
+    // lista unit/provider
+    const providers = await fetch(
+      "https://user-api.simplybook.it/admin/",
+      {
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+          "X-Company-Login":COMPANY_LOGIN,
+          "X-Token":token
+        },
+        body: JSON.stringify({
+          jsonrpc:"2.0",
+          method:"getUnitList",
+          params:[],
+          id:2
+        })
+      }
+    );
+
+    const providerData = await providers.json();
+
+    const result = {};
+
+    Object.values(providerData.result || {}).forEach(p => {
+
+      result[p.id] = p.qty || 0;
+
+    });
+
+    return new Response(
+      JSON.stringify(result),
+      {
+        headers:{
+          "Content-Type":"application/json",
+          "Access-Control-Allow-Origin":"*"
+        }
+      }
+    );
+
+  }
   /* =========================
      BOOKING CLIENTE
   ========================= */
@@ -69,12 +92,7 @@ export async function onRequestGet(context) {
       JSON.stringify({ error:"clientId missing" }),
       { headers:{ "Content-Type":"application/json" } }
     );
-  }
-
-  const COMPANY_LOGIN = "micemore";
-  const USER_LOGIN = "gp@micemorevents.it";
-  const USER_PASSWORD = "Micemore2026+";
-  const API_KEY = "047b3e6349938ce1f4b8e84e4b357bb8eb6de3968fcc9a5788d125dbe2c0cf72";
+  }  
 
   // token
   const login = await fetch(
@@ -136,6 +154,7 @@ export async function onRequestGet(context) {
   );
 
 }
+
 
 
 
