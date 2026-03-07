@@ -20,67 +20,71 @@ export async function onRequestGet(context) {
 
  if (url.pathname.includes("providerAvailability")) {
 
-    // login
-    const login = await fetch(
-      "https://user-api.simplybook.it/login",
-      {
-        method: "POST",
-        headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify({
-          jsonrpc:"2.0",
-          method:"getToken",
-          params:[
-            COMPANY_LOGIN,
-            API_KEY
-          ],
-          id:1
-        })
+    /* ========================
+     GET TOKEN (public API)
+  ======================== */
+
+  const login = await fetch(
+    "https://user-api.simplybook.it/",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        method: "getToken",
+        params: [COMPANY_LOGIN, API_KEY],
+        id: 1
+      })
+    }
+  );
+
+  const loginData = await login.json();
+  const token = loginData.result;
+
+  /* ========================
+     GET UNIT LIST
+  ======================== */
+
+  const providers = await fetch(
+    "https://user-api.simplybook.it/",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Company-Login": COMPANY_LOGIN,
+        "X-Token": token
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        method: "getUnitList",
+        params: [],
+        id: 2
+      })
+    }
+  );
+
+  const providerData = await providers.json();
+
+  const result = {};
+
+  Object.values(providerData.result || {}).forEach(p => {
+
+    result[p.id] = p.qty || 0;
+
+  });
+
+  return new Response(
+    JSON.stringify(result),
+    {
+      headers:{
+        "Content-Type":"application/json",
+        "Access-Control-Allow-Origin":"*"
       }
-    );
+    }
+  );
 
-    const loginData = await login.json();
-    const token = loginData.result;
-
-    // lista unit/provider
-    const providers = await fetch(
-      "https://user-api.simplybook.it/",
-      {
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json",
-          "X-Company-Login":COMPANY_LOGIN,
-          "X-Token":token
-        },
-        body: JSON.stringify({
-          jsonrpc:"2.0",
-          method:"getUnitList",
-          params:[],
-          id:2
-        })
-      }
-    );
-
-    const providerData = await providers.json();
-
-    const result = {};
-
-    Object.values(providerData.result || {}).forEach(p => {
-
-      result[p.id] = p.qty || 0;
-
-    });
-
-    return new Response(
-      JSON.stringify(result),
-      {
-        headers:{
-          "Content-Type":"application/json",
-          "Access-Control-Allow-Origin":"*"
-        }
-      }
-    );
-
-  }
+}
+  
   /* =========================
      BOOKING CLIENTE
   ========================= */
@@ -154,6 +158,7 @@ export async function onRequestGet(context) {
   );
 
 }
+
 
 
 
