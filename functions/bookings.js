@@ -29,18 +29,22 @@ if (providerAvailability) {
   ===================== */
 
   const login = await fetch(
-    "https://user-api.simplybook.it/",
-    {
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({
-        jsonrpc:"2.0",
-        method:"getToken",
-        params:[COMPANY_LOGIN, API_KEY],
-        id:1
-      })
-    }
-  );
+  "https://user-api.simplybook.it/login",
+  {
+    method: "POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({
+      jsonrpc:"2.0",
+      method:"getUserToken",
+      params:[
+        COMPANY_LOGIN,
+        USER_LOGIN,
+        USER_PASSWORD
+      ],
+      id:1
+    })
+  }
+);
 
   const loginData = await login.json();
   const token = loginData.result;
@@ -56,7 +60,7 @@ if (providerAvailability) {
       headers:{
         "Content-Type":"application/json",
         "X-Company-Login":COMPANY_LOGIN,
-        "X-Token":token
+        "X-User-Token":token
       },
       body: JSON.stringify({
         jsonrpc:"2.0",
@@ -188,6 +192,7 @@ return new Response(
   );
 
 }
+
 
 
 
