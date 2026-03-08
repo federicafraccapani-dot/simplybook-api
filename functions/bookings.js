@@ -80,23 +80,24 @@ if (providerAvailability) {
     }
   );
 
-   /*const matrixData = await matrix.json();
+   const matrixData = await matrix.json();
 
  const result = {};
 
-  (matrixData.result || []).forEach(provider => {
+(matrixData.result || []).forEach(provider => {
 
-    let count = 0;
+  const timeslots = provider.timeslots || {};
 
-    const timeslots = provider.timeslots || {};
+  const fri = (timeslots["2026-04-17"] || []).length;
+  const sat = (timeslots["2026-04-18"] || []).length;
 
-    Object.values(timeslots).forEach(day => {
-      count += day.length;
-    });
+  result[provider.provider_id] = {
+    fri: fri,
+    sat: sat,
+    total: fri + sat
+  };
 
-    result[provider.provider_id] = count;
-
-  });
+});
 
   return new Response(
     JSON.stringify(result),
@@ -106,19 +107,7 @@ if (providerAvailability) {
         "Access-Control-Allow-Origin":"*"
       }
     }
-  );*/
-
-  const matrixData = await matrix.json();
-
-return new Response(
-  JSON.stringify(matrixData, null, 2),
-  {
-    headers:{
-      "Content-Type":"application/json",
-      "Access-Control-Allow-Origin":"*"
-    }
-  }
-);
+  );
 
 }
   
@@ -195,6 +184,7 @@ return new Response(
   );
 
 }
+
 
 
 
