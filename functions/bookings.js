@@ -82,7 +82,7 @@ if (providerAvailability) {
 
   const matrixData = await matrix.json();
 
-  const result = {};
+  /*const result = {};
 
   (matrixData.result || []).forEach(provider => {
 
@@ -106,7 +106,19 @@ if (providerAvailability) {
         "Access-Control-Allow-Origin":"*"
       }
     }
-  );
+  );*/
+
+  const matrixData = await matrix.json();
+
+return new Response(
+  JSON.stringify(matrixData, null, 2),
+  {
+    headers:{
+      "Content-Type":"application/json",
+      "Access-Control-Allow-Origin":"*"
+    }
+  }
+);
 
 }
   
@@ -183,6 +195,7 @@ if (providerAvailability) {
   );
 
 }
+
 
 
 
