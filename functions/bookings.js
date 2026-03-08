@@ -80,9 +80,9 @@ if (providerAvailability) {
     }
   );
 
-  const matrixData = await matrix.json();
+   /*const matrixData = await matrix.json();
 
-  /*const result = {};
+ const result = {};
 
   (matrixData.result || []).forEach(provider => {
 
@@ -195,6 +195,7 @@ return new Response(
   );
 
 }
+
 
 
 
