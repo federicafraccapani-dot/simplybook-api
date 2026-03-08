@@ -13,96 +13,88 @@ export async function onRequestGet(context) {
   const API_KEY = context.env.API_KEY;
 
   const url = new URL(context.request.url);
-  const providerAvailability = url.searchParams.get("providerAvailability");
+const providerAvailability = url.searchParams.get("providerAvailability");
 
 if (providerAvailability) {
 
   const COMPANY_LOGIN = context.env.COMPANY_LOGIN;
-  const API_KEY = context.env.API_KEY;
+  const USER_LOGIN = context.env.USER_LOGIN;
+  const USER_PASSWORD = context.env.USER_PASSWORD;
 
   const SERVICE_ID = 2;
   const DATE_FROM = "2026-04-17";
   const DATE_TO = "2026-04-18";
 
   /* =====================
-     GET TOKEN
+     LOGIN ADMIN API
   ===================== */
 
   const login = await fetch(
-  "https://user-api.simplybook.it/login",
-  {
-    method: "POST",
-    headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({
-      jsonrpc:"2.0",
-      method:"getUserToken",
-      params:[
-        COMPANY_LOGIN,
-        USER_LOGIN,
-        USER_PASSWORD
-      ],
-      id:1
-    })
-  }
-);
+    "https://user-api.simplybook.it/login",
+    {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({
+        jsonrpc:"2.0",
+        method:"getUserToken",
+        params:[
+          COMPANY_LOGIN,
+          USER_LOGIN,
+          USER_PASSWORD
+        ],
+        id:1
+      })
+    }
+  );
 
   const loginData = await login.json();
   const token = loginData.result;
 
   /* =====================
-     GET SLOT MATRIX
+     GET CARTESIAN MATRIX
   ===================== */
 
   const matrix = await fetch(
-  "https://user-api.simplybook.it/admin/",
-  {
-    method:"POST",
-    headers:{
-      "Content-Type":"application/json",
-      "X-Company-Login": COMPANY_LOGIN,
-      "X-User-Token": token
-    },
-    body: JSON.stringify({
-      jsonrpc:"2.0",
-      method:"getStartTimeMatrix",
-      params:{
-        service_id: SERVICE_ID,
-        date_from: DATE_FROM,
-        date_to: DATE_TO
+    "https://user-api.simplybook.it/admin/",
+    {
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "X-Company-Login": COMPANY_LOGIN,
+        "X-User-Token": token
       },
-      id:2
-    })
-  }
-);
-  const matrixData = await matrix.json();
-
-return new Response(
-  JSON.stringify(matrixData, null, 2),
-  {
-    headers:{
-      "Content-Type":"application/json",
-      "Access-Control-Allow-Origin":"*"
+      body: JSON.stringify({
+        jsonrpc:"2.0",
+        method:"getCartesianStartTimeMatrix",
+        params:[
+          DATE_FROM,
+          DATE_TO,
+          SERVICE_ID,
+          [],
+          1,
+          null,
+          []
+        ],
+        id:2
+      })
     }
-  }
-);
+  );
+
+  const matrixData = await matrix.json();
 
   const result = {};
 
-  const providers = matrixData.result || {};
-
-  Object.keys(providers).forEach(providerId => {
+  (matrixData.result || []).forEach(provider => {
 
     let count = 0;
 
-    const days = providers[providerId];
+    const timeslots = provider.timeslots || {};
 
-    Object.values(days).forEach(slots => {
-
-      count += slots.length;
-
+    Object.values(timeslots).forEach(day => {
+      count += day.length;
     });
 
-    result[providerId] = count;
+    result[provider.provider_id] = count;
 
   });
 
@@ -191,6 +183,7 @@ return new Response(
   );
 
 }
+
 
 
 
