@@ -128,8 +128,11 @@ if(debug){
 
   const services = await simplybook(
     token,
-    "getServiceList",
-    []
+    "getEventList",
+    [false,
+    true,
+    false,
+    ""]
   );
 
   const clients = await simplybook(
@@ -282,3 +285,4 @@ function json(data){
   );
 
 }
+
