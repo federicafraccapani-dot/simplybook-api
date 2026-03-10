@@ -19,7 +19,8 @@ const providerAvailability = url.searchParams.get("providerAvailability");
   const debugSimplyBookCheck = url.searchParams.get("debugSimplyBook");
 
   if (debugSimplyBookCheck) {
-    return debugSimplyBook();
+    //return debugSimplyBook();
+    return "debug";
 }
 
   if(generateBookingsCheck){
@@ -379,6 +380,7 @@ if (providerAvailability) {
 }
 
 }
+
 
 
 
