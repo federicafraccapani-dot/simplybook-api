@@ -15,6 +15,10 @@ export async function onRequestGet(context) {
   const url = new URL(context.request.url);
 const providerAvailability = url.searchParams.get("providerAvailability");
 
+  if (url.pathname === "/generateBookings") {
+    return generateBookings();
+}
+
 if (providerAvailability) {
 
   const COMPANY_LOGIN = context.env.COMPANY_LOGIN;
@@ -183,7 +187,103 @@ if (providerAvailability) {
     }
   );
 
+  async function generateBookings() {
+
+    const serviceId = 2;
+    const clientId = 123; // buyer internazionale
+
+    const providersDay1 = Array.from({length:52},(_,i)=>i+4); // 4-55
+    const providersDay2 = Array.from({length:55},(_,i)=>i+1); // 1-55
+
+    const baseSlots = ["09:00","10:00","11:00","12:00"];
+    const offsets = [0,15,30,45];
+
+    function addMinutes(time,minutes){
+        let [h,m]=time.split(":").map(Number);
+        let d=new Date(0,0,0,h,m+minutes);
+        return d.toTimeString().slice(0,5);
+    }
+
+    async function simplybook(method,params){
+
+        const res = await fetch("https://user-api.simplybook.me",{
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json",
+                "X-Company-Login":SIMPLYBOOK_LOGIN,
+                "X-Token":SIMPLYBOOK_TOKEN
+            },
+            body:JSON.stringify({
+                jsonrpc:"2.0",
+                method:method,
+                params:params,
+                id:1
+            })
+        });
+
+        const data = await res.json();
+
+        if(data.error){
+            console.log("API error",data.error);
+        }
+
+        return data.result;
+    }
+
+    async function bookingExists(provider,date,start){
+
+        const bookings = await simplybook("getBookings",{
+            provider_id:provider,
+            date_from:date,
+            date_to:date
+        });
+
+        if(!bookings) return false;
+
+        for(const b of bookings){
+
+            const t = b.start_time.substring(0,5);
+
+            if(t === start){
+                return true;
+            }
+
+        }
+
+        return false;
+
+    }
+
+    async function createBooking(provider,date,start){
+
+        const end = addMinutes(start,15);
+
+        const exists = await bookingExists(provider,date,start);
+
+        if(exists){
+            console.log("SKIP existing",provider,date,start);
+            return;
+        }
+
+        console.log("CREATE",provider,date,start);
+
+        await simplybook("createBooking",{
+            service_id:serviceId,
+            provider_id:provider,
+            client_id:clientId,
+            date:date,
+            start_time:start,
+            end_time:end
+        });
+
+    }
+
+    async function generateDay(date,reverse,providers){
+
+        for(const provider
+
 }
+
 
 
 
