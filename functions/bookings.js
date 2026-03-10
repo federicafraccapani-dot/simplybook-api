@@ -163,6 +163,15 @@ if(debug){
   });
 
 }
+   
+
+/* =========================
+   GENERATE BOOKINGS
+========================= */
+
+if(generate && clientId && serviceId && providerId){
+  return generateBookings(token, serviceId, clientId, providerId, COMPANY_LOGIN);
+}
 
 /* =========================
    BOOKING PER CLIENTE
@@ -180,14 +189,6 @@ if(clientId){
 
   return json(bookings);
 
-}
-
-/* =========================
-   GENERATE BOOKINGS
-========================= */
-
-if(generate && clientId && serviceId && providerId){
-  return generateBookings(token, serviceId, clientId, providerId, COMPANY_LOGIN);
 }
 
 /* =========================
@@ -318,6 +319,7 @@ function json(data){
   );
 
 }
+
 
 
 
