@@ -14,18 +14,6 @@ export async function onRequestGet(context) {
 
   const url = new URL(context.request.url);
 const providerAvailability = url.searchParams.get("providerAvailability");
-  const generateBookingsCheck = url.searchParams.get("generateBookings");
-  
-  const debugSimplyBookCheck = url.searchParams.get("debugSimplyBook");
-
-  if (debugSimplyBookCheck) {
-    //return debugSimplyBook();
-    return "debug";
-}
-
-  if(generateBookingsCheck){
-    return generateBookings();
-  }
 
 if (providerAvailability) {
 
@@ -129,12 +117,19 @@ if (providerAvailability) {
   
   const clientId = parseInt(url.searchParams.get("clientId"));
 
+  const generate = parseInt(url.searchParams.get("generate"));
+
   if(!clientId){
     return new Response(
-      JSON.stringify({ error:"clientId missing" }),
+      JSON.stringify({ error:"clientIdddd missing" }),
       { headers:{ "Content-Type":"application/json" } }
     );
   }  
+
+   if(generate){
+    return generateBookings();
+  } 
+  else{
 
   // token
   const login = await fetch(
@@ -194,6 +189,7 @@ if (providerAvailability) {
       }
     }
   );
+  }
 
   async function generateBookings() {
 
@@ -317,69 +313,8 @@ if (providerAvailability) {
 
 }
 
-  async function debugSimplyBook() {
-
-
-    /* 1️⃣ ottieni token */
-
-    const tokenRes = await fetch("https://user-api.simplybook.me/login", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            company: COMPANY_LOGIN,
-            apiKey: API_KEY
-        })
-    });
-
-    const tokenData = await tokenRes.json();
-    const token = tokenData.token;
-
-    /* helper chiamate API */
-
-    async function simplybook(method, params = {}) {
-
-        const res = await fetch("https://user-api.simplybook.me", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-Company-Login": login,
-                "X-Token": token
-            },
-            body: JSON.stringify({
-                jsonrpc: "2.0",
-                method: method,
-                params: params,
-                id: 1
-            })
-        });
-
-        const data = await res.json();
-
-        if (data.error) {
-            return { error: data.error };
-        }
-
-        return data.result;
-    }
-
-    /* 2️⃣ recupera dati */
-
-    const services = await simplybook("getServiceList");
-    const clients = await simplybook("getClientList");
-
-    return new Response(JSON.stringify({
-        token: token,
-        services: services,
-        clients: clients
-    }, null, 2), {
-        headers: { "Content-Type": "application/json" }
-    });
-
 }
 
-}
 
 
 
