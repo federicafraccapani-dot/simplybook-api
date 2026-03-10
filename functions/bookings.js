@@ -280,9 +280,37 @@ if (providerAvailability) {
 
     async function generateDay(date,reverse,providers){
 
-        for(const provider
+        for(const provider of providers){
+
+            const offsetIndex=(provider-1)%4;
+            const offset = reverse ? offsets[3-offsetIndex] : offsets[offsetIndex];
+
+            for(const slot of baseSlots){
+
+                const start = addMinutes(slot,offset);
+
+                await createBooking(provider,date,start);
+
+            }
+
+        }
+
+    }
+
+    console.log("Generating 17 April");
+
+    await generateDay("2026-04-17",false,providersDay1);
+
+    console.log("Generating 18 April");
+
+    await generateDay("2026-04-18",true,providersDay2);
+
+    return new Response("Booking generation completed");
 
 }
+
+}
+
 
 
 
