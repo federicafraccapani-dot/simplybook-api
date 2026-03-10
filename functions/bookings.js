@@ -268,7 +268,7 @@ async function generateBookings(token, serviceId, clientId, providerId, COMPANY_
 
   }
 
-  const offsetIndex=(provider-1)%4;
+  const offsetIndex=(provider-2)%4;
   const offset = offsets[offsetIndex];
   const reverseOffset = offsets[3-offsetIndex];
 
@@ -319,6 +319,7 @@ function json(data){
   );
 
 }
+
 
 
 
