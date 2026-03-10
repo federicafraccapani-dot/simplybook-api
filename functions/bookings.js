@@ -14,9 +14,9 @@ export async function onRequestGet(context) {
 
   const url = new URL(context.request.url);
 const providerAvailability = url.searchParams.get("providerAvailability");
-  const generateBookings = url.searchParams.get("generateBookings");
+  const generateBookingsCheck = url.searchParams.get("generateBookings");
 
-  if(generateBookings){
+  if(generateBookingsCheck){
     return generateBookings();
   }
 
@@ -311,6 +311,7 @@ if (providerAvailability) {
 }
 
 }
+
 
 
 
