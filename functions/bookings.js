@@ -15,6 +15,12 @@ export async function onRequestGet(context) {
   const url = new URL(context.request.url);
 const providerAvailability = url.searchParams.get("providerAvailability");
   const generateBookingsCheck = url.searchParams.get("generateBookings");
+  
+  const debugSimplyBook = url.searchParams.get("debugSimplyBook");
+
+  if (debugSimplyBook) {
+    return debugSimplyBook();
+}
 
   if(generateBookingsCheck){
     return generateBookings();
@@ -211,7 +217,7 @@ if (providerAvailability) {
             method:"POST",
             headers:{
                 "Content-Type":"application/json",
-                "X-Company-Login":SIMPLYBOOK_LOGIN,
+                "X-Company-Login":COMPANY_LOGIN,
                 "X-Token":SIMPLYBOOK_TOKEN
             },
             body:JSON.stringify({
@@ -310,7 +316,70 @@ if (providerAvailability) {
 
 }
 
+  async function debugSimplyBook() {
+
+
+    /* 1️⃣ ottieni token */
+
+    const tokenRes = await fetch("https://user-api.simplybook.me/login", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            company: COMPANY_LOGIN,
+            apiKey: API_KEY
+        })
+    });
+
+    const tokenData = await tokenRes.json();
+    const token = tokenData.token;
+
+    /* helper chiamate API */
+
+    async function simplybook(method, params = {}) {
+
+        const res = await fetch("https://user-api.simplybook.me", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-Company-Login": login,
+                "X-Token": token
+            },
+            body: JSON.stringify({
+                jsonrpc: "2.0",
+                method: method,
+                params: params,
+                id: 1
+            })
+        });
+
+        const data = await res.json();
+
+        if (data.error) {
+            return { error: data.error };
+        }
+
+        return data.result;
+    }
+
+    /* 2️⃣ recupera dati */
+
+    const services = await simplybook("getServiceList");
+    const clients = await simplybook("getClientList");
+
+    return new Response(JSON.stringify({
+        token: token,
+        services: services,
+        clients: clients
+    }, null, 2), {
+        headers: { "Content-Type": "application/json" }
+    });
+
 }
+
+}
+
 
 
 
