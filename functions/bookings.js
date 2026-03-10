@@ -187,7 +187,7 @@ if(clientId){
 ========================= */
 
 if(generate && clientId && serviceId && providerId){
-  return generateBookings(token, serviceId, clientId, providerId);
+  return generateBookings(token, serviceId, clientId, providerId, COMPANY_LOGIN);
 }
 
 /* =========================
@@ -204,9 +204,11 @@ return json({
    GENERATE BOOKINGS
 ========================= */
 
-async function generateBookings(token, serviceId, clientId, providerId){
+async function generateBookings(token, serviceId, clientId, providerId, COMPANY_LOGIN){
 
   const provider = parseInt(providerId);
+  const client = parseInt(clientId);
+   const service = parseInt(serviceId);
 
   const baseSlots = ["09:00","10:00","11:00","12:00"];
   const offsets = [0,15,30,45];
@@ -237,9 +239,9 @@ async function generateBookings(token, serviceId, clientId, providerId){
           jsonrpc:"2.0",
           method:"book",
           params:[
-            serviceId,
+            service,
             provider,
-            clientId,
+            client,
             date,
             startTime,
             date,
@@ -299,32 +301,6 @@ async function generateBookings(token, serviceId, clientId, providerId){
 
 }
 
-  async function generateDay(date,reverse,providers){
-
-    for(const provider of providers){
-
-      const offsetIndex=(provider-1)%4;
-      const offset = reverse ? offsets[3-offsetIndex] : offsets[offsetIndex];
-
-      for(const slot of baseSlots){
-
-        const start = addMinutes(slot,offset);
-
-        await createBooking(provider,date,start);
-
-      }
-
-    }
-
-  }
-
-  await generateDay("2026-04-17",false,providersDay1);
-  await generateDay("2026-04-18",true,providersDay2);
-
-  return new Response("Bookings generated");
-
-}
-
 /* =========================
    JSON RESPONSE
 ========================= */
@@ -342,6 +318,7 @@ function json(data){
   );
 
 }
+
 
 
 
