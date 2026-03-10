@@ -192,8 +192,8 @@ return json({
 
 async function generateBookings(token){
 
-  const serviceId = 2;
-  const clientId = 123;
+  const serviceId = 5;
+  const clientId = 11;
 
   const providersDay1 = Array.from({length:52},(_,i)=>i+4);
   const providersDay2 = Array.from({length:55},(_,i)=>i+1);
@@ -285,4 +285,5 @@ function json(data){
   );
 
 }
+
 
