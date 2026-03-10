@@ -16,6 +16,8 @@ const url = new URL(context.request.url);
 const providerAvailability = url.searchParams.get("providerAvailability");
 const debug = url.searchParams.get("debug");
 const clientId = url.searchParams.get("clientId");
+const serviceId = url.searchParams.get("serviceId");
+const providerId = url.searchParams.get("providerId");
 const generate = url.searchParams.get("generate");
 
 /* =========================
@@ -129,10 +131,12 @@ if(debug){
   const services = await simplybook(
     token,
     "getEventList",
-    [false,
-    true,
-    false,
-    ""]
+    [
+      false,
+      true,
+      false,
+      ""
+    ]
   );
 
   const clients = await simplybook(
@@ -141,9 +145,21 @@ if(debug){
     []
   );
 
+  const providers = await simplybook(
+    token,
+    "getUnitList",
+    [
+      false,  // include anche nascosti
+      true,   // array
+      null,   // skip class filter
+      ""      // nessun filtro nome
+    ]
+  );
+
   return json({
     services,
-    clients
+    clients,
+    providers
   });
 
 }
@@ -170,10 +186,8 @@ if(clientId){
    GENERATE BOOKINGS
 ========================= */
 
-if(generate){
-
-  return generateBookings(token);
-
+if(generate && clientId && serviceId && providerId){
+  return generateBookings(token, serviceId, clientId, providerId);
 }
 
 /* =========================
@@ -190,57 +204,100 @@ return json({
    GENERATE BOOKINGS
 ========================= */
 
-async function generateBookings(token){
+async function generateBookings(token, serviceId, clientId, providerId){
 
-  const serviceId = 5;
-  const clientId = 11;
-
-  const providersDay1 = Array.from({length:52},(_,i)=>i+4);
-  const providersDay2 = Array.from({length:55},(_,i)=>i+1);
+  const provider = parseInt(providerId);
 
   const baseSlots = ["09:00","10:00","11:00","12:00"];
   const offsets = [0,15,30,45];
 
   function addMinutes(time,minutes){
-
     let [h,m]=time.split(":").map(Number);
-
     let d=new Date(0,0,0,h,m+minutes);
-
     return d.toTimeString().slice(0,5);
-
   }
 
-  async function createBooking(provider,date,start){
+  async function createBooking(date,start){
 
     const end = addMinutes(start,15);
 
-    await fetch(
+    const startTime = start + ":00";
+    const endTime = end + ":00";
+
+    const res = await fetch(
       "https://user-api.simplybook.it/admin/",
       {
         method:"POST",
         headers:{
           "Content-Type":"application/json",
-          "X-Company-Login":process.env.COMPANY_LOGIN,
-          "X-User-Token":token
+          "X-Company-Login": COMPANY_LOGIN,
+          "X-User-Token": token
         },
         body:JSON.stringify({
           jsonrpc:"2.0",
-          method:"createBooking",
-          params:[{
-            service_id:serviceId,
-            provider_id:provider,
-            client_id:clientId,
-            date:date,
-            start_time:start,
-            end_time:end
-          }],
+          method:"book",
+          params:[
+            serviceId,
+            provider,
+            clientId,
+            date,
+            startTime,
+            date,
+            endTime,
+            0,
+            {},
+            1,
+            null,
+            null
+          ],
           id:3
         })
       }
     );
 
+    const data = await res.json();
+
+    if(data.error){
+      console.log("BOOK ERROR",data.error);
+    } else {
+      console.log("BOOKED",provider,date,start);
+    }
+
   }
+
+  const offsetIndex=(provider-1)%4;
+  const offset = offsets[offsetIndex];
+  const reverseOffset = offsets[3-offsetIndex];
+
+  /* 17 aprile */
+
+  for(const slot of baseSlots){
+
+    const start = addMinutes(slot,offset);
+
+    await createBooking("2026-04-17",start);
+
+  }
+
+  /* 18 aprile */
+
+  for(const slot of baseSlots){
+
+    const start = addMinutes(slot,reverseOffset);
+
+    await createBooking("2026-04-18",start);
+
+  }
+
+  return new Response(
+    JSON.stringify({
+      provider,
+      created:8
+    }),
+    { headers:{ "Content-Type":"application/json" } }
+  );
+
+}
 
   async function generateDay(date,reverse,providers){
 
@@ -285,5 +342,6 @@ function json(data){
   );
 
 }
+
 
 
