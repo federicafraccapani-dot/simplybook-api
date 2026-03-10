@@ -14,10 +14,11 @@ export async function onRequestGet(context) {
 
   const url = new URL(context.request.url);
 const providerAvailability = url.searchParams.get("providerAvailability");
+  const generateBookings = url.searchParams.get("generateBookings");
 
-  if (url.pathname === "/generateBookings") {
+  if(generateBookings){
     return generateBookings();
-}
+  }
 
 if (providerAvailability) {
 
@@ -310,6 +311,7 @@ if (providerAvailability) {
 }
 
 }
+
 
 
 
