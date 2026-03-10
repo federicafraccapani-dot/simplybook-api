@@ -16,9 +16,9 @@ export async function onRequestGet(context) {
 const providerAvailability = url.searchParams.get("providerAvailability");
   const generateBookingsCheck = url.searchParams.get("generateBookings");
   
-  const debugSimplyBook = url.searchParams.get("debugSimplyBook");
+  const debugSimplyBookCheck = url.searchParams.get("debugSimplyBook");
 
-  if (debugSimplyBook) {
+  if (debugSimplyBookCheck) {
     return debugSimplyBook();
 }
 
@@ -379,6 +379,7 @@ if (providerAvailability) {
 }
 
 }
+
 
 
 
