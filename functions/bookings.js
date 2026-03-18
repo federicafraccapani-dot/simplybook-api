@@ -533,12 +533,31 @@ actions.push({
 type:"move",
 booking:b.id,
 provider,
-from:{
-day,
-time
-},
+from:{day,time},
 to:target,
 reason:p.type
+});
+
+/* aggiorna matrice simulata */
+
+/* rimuovi dallo slot originale */
+
+const oldSlot = matrix[day][time];
+
+for(let i=0;i<oldSlot.length;i++){
+
+if(oldSlot[i].id === b.id){
+oldSlot.splice(i,1);
+break;
+}
+
+}
+
+/* aggiungi al nuovo slot */
+
+matrix[target.day][target.slot].push({
+id:b.id,
+unit_id:provider
 });
 
 }
