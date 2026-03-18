@@ -317,187 +317,243 @@ async function generateBookings(token, serviceId, clientId, providerId, COMPANY_
 
 async function rebalanceBookings(simplybook, token, COMPANY_LOGIN, clientId, serviceId){
 
-  const client = parseInt(clientId);
-  const service = parseInt(serviceId);
+const client = parseInt(clientId);
+const service = parseInt(serviceId);
 
-  const DAYS = ["2026-04-17","2026-04-18"];
+const DAYS = ["2026-04-17","2026-04-18"];
 
-  const SLOTS = [
-    "09:00","09:15","09:30","09:45",
-    "10:00","10:15","10:30","10:45",
-    "11:00","11:15","11:30","11:45",
-    "12:00","12:15","12:30","12:45"
-  ];
+const SLOTS = [
+"09:00","09:15","09:30","09:45",
+"10:00","10:15","10:30","10:45",
+"11:00","11:15","11:30","11:45",
+"12:00","12:15","12:30","12:45"
+];
 
-  const MAX_PER_SLOT = 15;
+const MAX_PER_SLOT = 15;
 
-  const excluded = new Set([13,39]);
+const excluded = new Set([13,39]);
 
-  /* =========================
-     READ BOOKINGS
-  ========================= */
+/* =========================
+READ BOOKINGS
+========================= */
 
-  const allBookings = await simplybook(
-    token,
-    "getBookings",
-    [{ client_id: client }]
-  );
+const allBookings = await simplybook(
+token,
+"getBookings",
+[{ client_id: client }]
+);
 
-  const bookings = allBookings
-    .filter(b => String(b.event_id) === String(service))
-    .filter(b => !excluded.has(parseInt(b.unit_id)));
+const bookings = allBookings
+.filter(b => String(b.event_id) === String(service))
+.filter(b => !excluded.has(parseInt(b.unit_id)));
 
-  /* =========================
-     MATRIX slot → bookings
-  ========================= */
+/* =========================
+BUILD MATRIX
+========================= */
 
-  const matrix = {};
+const matrix = {};
 
-  for(const day of DAYS){
+for(const day of DAYS){
 
-    matrix[day] = {};
+matrix[day] = {};
 
-    for(const slot of SLOTS){
-      matrix[day][slot] = [];
-    }
-
-  }
-
-  for(const b of bookings){
-
-    const day = b.start_date.substring(0,10);
-    const time = b.start_date.substring(11,16);
-
-    if(matrix[day] && matrix[day][time]){
-      matrix[day][time].push(b);
-    }
-
-  }
-
-  const actions = [];
-
-  /* =========================
-     SLOT OVERFLOW
-  ========================= */
-
-  for(const day of DAYS){
-
-    for(const slot of SLOTS){
-
-      const meetings = matrix[day][slot];
-
-      if(meetings.length > MAX_PER_SLOT){
-
-        const extra = meetings.slice(MAX_PER_SLOT);
-
-        for(const b of extra){
-
-          actions.push({
-            type:"move",
-            booking:b.id,
-            provider:b.unit_id,
-            day,
-            current:slot,
-            reason:"slot overflow"
-          });
-
-        }
-
-      }
-
-    }
-
-  }
-
-  /* =========================
-     CONSECUTIVE EXPO CHECK
-  ========================= */
-
-  const byProvider = {};
-
-  for(const b of bookings){
-
-    const p = b.unit_id;
-
-    if(!byProvider[p]){
-      byProvider[p] = [];
-    }
-
-    byProvider[p].push(b);
-
-  }
-
-  for(const provider in byProvider){
-
-    const meetings = byProvider[provider];
-
-    const sorted = meetings
-      .map(b => ({
-        id:b.id,
-        day:b.start_date.substring(0,10),
-        time:b.start_date.substring(11,16)
-      }))
-      .sort((a,b)=>a.time.localeCompare(b.time));
-
-    for(let i=1;i<sorted.length;i++){
-
-      const prev = sorted[i-1];
-      const cur = sorted[i];
-
-      const indexPrev = SLOTS.indexOf(prev.time);
-      const indexCur = SLOTS.indexOf(cur.time);
-
-      if(prev.day === cur.day && indexCur === indexPrev+1){
-
-        actions.push({
-          type:"move",
-          booking:cur.id,
-          provider,
-          day:cur.day,
-          current:cur.time,
-          reason:"consecutive meeting"
-        });
-
-      }
-
-    }
-
-  }
-
-  /* =========================
-     FILL UNDERUSED SLOTS
-  ========================= */
-
-  for(const day of DAYS){
-
-    for(const slot of SLOTS){
-
-      const count = matrix[day][slot].length;
-
-      if(count < MAX_PER_SLOT){
-
-        actions.push({
-          type:"create",
-          day,
-          slot,
-          missing: MAX_PER_SLOT-count
-        });
-
-      }
-
-    }
-
-  }
-
-  return json({
-    client,
-    service,
-    bookings:bookings.length,
-    actions
-  });
+for(const slot of SLOTS){
+matrix[day][slot] = [];
+}
 
 }
+
+for(const b of bookings){
+
+const day = b.start_date.substring(0,10);
+const time = b.start_date.substring(11,16);
+
+if(matrix[day] && matrix[day][time]){
+matrix[day][time].push(b);
+}
+
+}
+
 /* =========================
+HELPERS
+========================= */
+
+function slotIndex(time){
+return SLOTS.indexOf(time);
+}
+
+function isSlotAvailable(day,slot,provider){
+
+const meetings = matrix[day][slot];
+
+if(meetings.length >= MAX_PER_SLOT) return false;
+
+for(const m of meetings){
+if(m.unit_id === provider) return false;
+}
+
+return true;
+
+}
+
+/* =========================
+FIND ISSUES
+========================= */
+
+const problems = [];
+
+/* overflow */
+
+for(const day of DAYS){
+
+for(const slot of SLOTS){
+
+const meetings = matrix[day][slot];
+
+if(meetings.length > MAX_PER_SLOT){
+
+const extra = meetings.slice(MAX_PER_SLOT);
+
+for(const m of extra){
+
+problems.push({
+type:"overflow",
+booking:m
+});
+
+}
+
+}
+
+}
+
+}
+
+/* consecutive */
+
+const byProvider = {};
+
+for(const b of bookings){
+
+if(!byProvider[b.unit_id]){
+byProvider[b.unit_id] = [];
+}
+
+byProvider[b.unit_id].push(b);
+
+}
+
+for(const provider in byProvider){
+
+const meetings = byProvider[provider]
+.map(b => ({
+id:b.id,
+booking:b,
+day:b.start_date.substring(0,10),
+time:b.start_date.substring(11,16)
+}))
+.sort((a,b)=>a.time.localeCompare(b.time));
+
+for(let i=1;i<meetings.length;i++){
+
+const prev = meetings[i-1];
+const cur = meetings[i];
+
+if(prev.day === cur.day){
+
+const i1 = slotIndex(prev.time);
+const i2 = slotIndex(cur.time);
+
+if(i2 === i1+1){
+
+problems.push({
+type:"consecutive",
+booking:cur.booking
+});
+
+}
+
+}
+
+}
+
+}
+
+/* =========================
+FIND NEW SLOT
+========================= */
+
+function findNewSlot(day,time,provider){
+
+/* try same day */
+
+for(const slot of SLOTS){
+
+if(isSlotAvailable(day,slot,provider)){
+return {day,slot};
+}
+
+}
+
+/* try other day */
+
+const otherDay = day === DAYS[0] ? DAYS[1] : DAYS[0];
+
+for(const slot of SLOTS){
+
+if(isSlotAvailable(otherDay,slot,provider)){
+return {day:otherDay,slot};
+}
+
+}
+
+return null;
+
+}
+
+/* =========================
+BUILD ACTIONS
+========================= */
+
+const actions = [];
+
+for(const p of problems){
+
+const b = p.booking;
+
+const day = b.start_date.substring(0,10);
+const time = b.start_date.substring(11,16);
+const provider = b.unit_id;
+
+const target = findNewSlot(day,time,provider);
+
+if(target){
+
+actions.push({
+type:"move",
+booking:b.id,
+provider,
+from:{
+day,
+time
+},
+to:target,
+reason:p.type
+});
+
+}
+
+}
+
+return json({
+client,
+service,
+bookings:bookings.length,
+problems:problems.length,
+actions
+});
+
+}/* =========================
    JSON RESPONSE
 ========================= */
 
