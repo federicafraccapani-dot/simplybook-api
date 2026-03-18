@@ -19,6 +19,7 @@ const clientId = url.searchParams.get("clientId");
 const serviceId = url.searchParams.get("serviceId");
 const providerId = url.searchParams.get("providerId");
 const generate = url.searchParams.get("generate");
+const rebalance = url.searchParams.get("rebalance");
 
 /* =========================
    LOGIN
@@ -173,6 +174,14 @@ if(generate && clientId && serviceId && providerId){
   return generateBookings(token, serviceId, clientId, providerId, COMPANY_LOGIN);
 }
 
+   /* =========================
+   REBALANCE BOOKINGS
+========================= */
+
+if(rebalance && clientId && serviceId && providerId){
+  return rebalanceBookings(token, serviceId, clientId, COMPANY_LOGIN);
+}
+
 /* =========================
    BOOKING PER CLIENTE
 ========================= */
@@ -299,6 +308,108 @@ async function generateBookings(token, serviceId, clientId, providerId, COMPANY_
     }),
     { headers:{ "Content-Type":"application/json" } }
   );
+
+}
+
+/* =========================
+   REBALANCE BOOKINGS
+========================= */
+
+async function rebalanceBookings(token, serviceId, clientId, COMPANY_LOGIN){
+
+  const client = parseInt(clientId);
+  const service = parseInt(serviceId);
+
+  const DAYS = ["2026-04-17","2026-04-18"];
+
+  const slots = [
+  "09:00","09:15","09:30","09:45",
+  "10:00","10:15","10:30","10:45",
+  "11:00","11:15","11:30","11:45",
+  "12:00","12:15","12:30","12:45"
+  ];
+
+  const excluded = new Set([14,40]);
+
+  const offsets = [0,15,30,45];
+
+  const bookings = await simplybook(
+    token,
+    "getBookings",
+    [{
+      client_id: client
+    }]
+  );
+
+  function addMinutes(time,minutes){
+    let [h,m]=time.split(":").map(Number);
+    let d=new Date(0,0,0,h,m+minutes);
+    return d.toTimeString().slice(0,5);
+  }
+
+  function expectedSlots(provider,day){
+
+    const offsetIndex=(provider-1)%4;
+
+    const offset = day==="2026-04-17"
+      ? offsets[offsetIndex]
+      : offsets[3-offsetIndex];
+
+    const baseHours=["09:00","10:00","11:00","12:00"];
+
+    const result=[];
+
+    for(const base of baseHours){
+      result.push(addMinutes(base,offset));
+    }
+
+    const extra = provider%2===0;
+
+    if((day==="2026-04-17" && extra) ||
+       (day==="2026-04-18" && !extra)){
+
+      result.push(addMinutes("09:30",offset));
+
+    }
+
+    return result;
+
+  }
+
+  const actions=[];
+
+  for(const providerBooking of bookings){
+
+    const provider = providerBooking.unit_id;
+
+    if(excluded.has(provider)) continue;
+
+    const day = providerBooking.start_date.substring(0,10);
+
+    const time = providerBooking.start_date.substring(11,16);
+
+    const expected = expectedSlots(provider,day);
+
+    if(!expected.includes(time)){
+
+      actions.push({
+        type:"move",
+        booking:providerBooking.id,
+        provider,
+        current:time,
+        expected
+      });
+
+    }
+
+  }
+
+  return json({
+    client,
+    service,
+    bookings:bookings.length,
+    actions
+  });
 
 }
 
