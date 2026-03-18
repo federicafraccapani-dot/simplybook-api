@@ -178,7 +178,7 @@ if(generate && clientId && serviceId && providerId){
    REBALANCE BOOKINGS
 ========================= */
 
-if(rebalance && clientId && serviceId && providerId){
+if(rebalance && clientId && serviceId){
   return rebalanceBookings(token, COMPANY_LOGIN, clientId, serviceId);
 }
 
@@ -316,6 +316,9 @@ async function generateBookings(token, serviceId, clientId, providerId, COMPANY_
 ========================= */
 
 async function rebalanceBookings(token, COMPANY_LOGIN, clientId, serviceId){
+
+   console.log("REBALANCE START");
+   //return json({test:"rebalance running"});
 
   const client = parseInt(clientId);
   const service = parseInt(serviceId);
