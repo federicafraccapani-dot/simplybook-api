@@ -20,6 +20,7 @@ const serviceId = url.searchParams.get("serviceId");
 const providerId = url.searchParams.get("providerId");
 const generate = url.searchParams.get("generate");
 const rebalance = url.searchParams.get("rebalance");
+const apply = url.searchParams.get("apply");
 
 /* =========================
    LOGIN
@@ -179,7 +180,7 @@ if(generate && clientId && serviceId && providerId){
 ========================= */
 
 if(rebalance && clientId && serviceId){
-  return rebalanceBookings(simplybook, token, COMPANY_LOGIN, clientId, serviceId);
+  return rebalanceBookings(simplybook, token, COMPANY_LOGIN, clientId, serviceId, apply);
 }
 
 /* =========================
@@ -315,7 +316,7 @@ async function generateBookings(token, serviceId, clientId, providerId, COMPANY_
    REBALANCE BOOKINGS
 ========================= */
 
-async function rebalanceBookings(simplybook, token, COMPANY_LOGIN, clientId, serviceId){
+async function rebalanceBookings(simplybook, token, COMPANY_LOGIN, clientId, serviceId, apply){
 
 const client = parseInt(clientId);
 const service = parseInt(serviceId);
@@ -600,6 +601,51 @@ unit_id:provider
 }
 
 }
+
+if(apply){
+
+for(const action of actions){
+
+const booking = action.booking;
+const provider = action.provider;
+
+const start = action.to.slot + ":00";
+
+const endDate = action.to.day;
+
+const [h,m] = action.to.slot.split(":").map(Number);
+
+const end = new Date(0,0,0,h,m+15)
+.toTimeString()
+.slice(0,5) + ":00";
+
+await fetch(
+"https://user-api.simplybook.it/admin/",
+{
+method:"POST",
+headers:{
+"Content-Type":"application/json",
+"X-Company-Login": COMPANY_LOGIN,
+"X-User-Token": token
+},
+body:JSON.stringify({
+jsonrpc:"2.0",
+method:"updateBooking",
+params:[
+booking,
+{
+start_date: action.to.day + " " + start,
+end_date: action.to.day + " " + end
+}
+],
+id:5
+})
+}
+);
+
+}
+
+}   
 
 return json({
 client,
