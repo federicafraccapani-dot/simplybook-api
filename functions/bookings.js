@@ -317,7 +317,7 @@ async function generateBookings(token, serviceId, clientId, providerId, COMPANY_
 
 async function rebalanceBookings(token, COMPANY_LOGIN, clientId, serviceId){
 
-   console.log("REBALANCE START");
+   console.log("REBALANCE START!");
    //return json({test:"rebalance running"});
 
   const client = parseInt(clientId);
