@@ -317,55 +317,24 @@ async function generateBookings(token, serviceId, clientId, providerId, COMPANY_
 
 async function rebalanceBookings(simplybook, token, COMPANY_LOGIN, clientId, serviceId){
 
-   console.log("REBALANCE START!");
-   //return json({test:"rebalance running"});
-
   const client = parseInt(clientId);
   const service = parseInt(serviceId);
 
   const DAYS = ["2026-04-17","2026-04-18"];
 
+  const SLOTS = [
+    "09:00","09:15","09:30","09:45",
+    "10:00","10:15","10:30","10:45",
+    "11:00","11:15","11:30","11:45",
+    "12:00","12:15","12:30","12:45"
+  ];
+
+  const MAX_PER_SLOT = 15;
+
   const excluded = new Set([14,40]);
 
-  const offsets = [0,15,30,45];
-
-  const baseHours = ["09:00","10:00","11:00","12:00"];
-
-  function addMinutes(time,minutes){
-    let [h,m]=time.split(":").map(Number);
-    let d=new Date(0,0,0,h,m+minutes);
-    return d.toTimeString().slice(0,5);
-  }
-
-  function expectedSlots(provider,day){
-
-    const offsetIndex = (provider-1)%4;
-
-    const offset = day==="2026-04-17"
-      ? offsets[offsetIndex]
-      : offsets[3-offsetIndex];
-
-    const result=[];
-
-    for(const base of baseHours){
-      result.push(addMinutes(base,offset));
-    }
-
-    const extra = provider % 2 === 0;
-
-    if((day==="2026-04-17" && extra) ||
-       (day==="2026-04-18" && !extra)){
-
-      result.push(addMinutes("09:30",offset));
-
-    }
-
-    return result;
-
-  }
-
   /* =========================
-     LEGGI BOOKING
+     READ BOOKINGS
   ========================= */
 
   const allBookings = await simplybook(
@@ -379,76 +348,140 @@ async function rebalanceBookings(simplybook, token, COMPANY_LOGIN, clientId, ser
     .filter(b => !excluded.has(parseInt(b.unit_id)));
 
   /* =========================
-     ORGANIZZA PER PROVIDER
+     MATRIX slot → bookings
   ========================= */
 
-  const byProvider = {};
+  const matrix = {};
+
+  for(const day of DAYS){
+
+    matrix[day] = {};
+
+    for(const slot of SLOTS){
+      matrix[day][slot] = [];
+    }
+
+  }
 
   for(const b of bookings){
 
-    const provider = parseInt(b.unit_id);
+    const day = b.start_date.substring(0,10);
+    const time = b.start_date.substring(11,16);
 
-    if(!byProvider[provider]){
-      byProvider[provider] = [];
+    if(matrix[day] && matrix[day][time]){
+      matrix[day][time].push(b);
     }
-
-    byProvider[provider].push(b);
 
   }
 
   const actions = [];
 
   /* =========================
-     CONTROLLO SLOT
+     SLOT OVERFLOW
   ========================= */
 
-  for(const provider in byProvider){
+  for(const day of DAYS){
 
-    const providerBookings = byProvider[provider];
+    for(const slot of SLOTS){
 
-    for(const day of DAYS){
+      const meetings = matrix[day][slot];
 
-      const expected = expectedSlots(parseInt(provider),day);
+      if(meetings.length > MAX_PER_SLOT){
 
-      const current = providerBookings
-        .filter(b => b.start_date.startsWith(day))
-        .map(b => b.start_date.substring(11,16));
+        const extra = meetings.slice(MAX_PER_SLOT);
 
-      /* slot mancanti */
-
-      for(const slot of expected){
-
-        if(!current.includes(slot)){
+        for(const b of extra){
 
           actions.push({
-            type:"create",
-            provider:parseInt(provider),
+            type:"move",
+            booking:b.id,
+            provider:b.unit_id,
             day,
-            slot
+            current:slot,
+            reason:"slot overflow"
           });
 
         }
 
       }
 
-      /* slot errati */
+    }
 
-      for(const b of providerBookings.filter(x => x.start_date.startsWith(day))){
+  }
 
-        const time = b.start_date.substring(11,16);
+  /* =========================
+     CONSECUTIVE EXPO CHECK
+  ========================= */
 
-        if(!expected.includes(time)){
+  const byProvider = {};
 
-          actions.push({
-            type:"move",
-            booking:b.id,
-            provider:parseInt(provider),
-            day,
-            current:time,
-            expected
-          });
+  for(const b of bookings){
 
-        }
+    const p = b.unit_id;
+
+    if(!byProvider[p]){
+      byProvider[p] = [];
+    }
+
+    byProvider[p].push(b);
+
+  }
+
+  for(const provider in byProvider){
+
+    const meetings = byProvider[provider];
+
+    const sorted = meetings
+      .map(b => ({
+        id:b.id,
+        day:b.start_date.substring(0,10),
+        time:b.start_date.substring(11,16)
+      }))
+      .sort((a,b)=>a.time.localeCompare(b.time));
+
+    for(let i=1;i<sorted.length;i++){
+
+      const prev = sorted[i-1];
+      const cur = sorted[i];
+
+      const indexPrev = SLOTS.indexOf(prev.time);
+      const indexCur = SLOTS.indexOf(cur.time);
+
+      if(prev.day === cur.day && indexCur === indexPrev+1){
+
+        actions.push({
+          type:"move",
+          booking:cur.id,
+          provider,
+          day:cur.day,
+          current:cur.time,
+          reason:"consecutive meeting"
+        });
+
+      }
+
+    }
+
+  }
+
+  /* =========================
+     FILL UNDERUSED SLOTS
+  ========================= */
+
+  for(const day of DAYS){
+
+    for(const slot of SLOTS){
+
+      const count = matrix[day][slot].length;
+
+      if(count < MAX_PER_SLOT){
+
+        actions.push({
+          type:"create",
+          day,
+          slot,
+          missing: MAX_PER_SLOT-count
+        });
 
       }
 
@@ -460,12 +493,10 @@ async function rebalanceBookings(simplybook, token, COMPANY_LOGIN, clientId, ser
     client,
     service,
     bookings:bookings.length,
-    providers:Object.keys(byProvider).length,
     actions
   });
 
 }
-
 /* =========================
    JSON RESPONSE
 ========================= */
