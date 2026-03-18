@@ -346,7 +346,8 @@ token,
 
 const bookings = allBookings
 .filter(b => String(b.event_id) === String(service))
-.filter(b => !excluded.has(parseInt(b.unit_id)));
+.filter(b => !excluded.has(parseInt(b.unit_id)))
+.filter(b => DAYS.includes(b.start_date.substring(0,10)));
 
 /* =========================
 BUILD MATRIX
@@ -577,6 +578,8 @@ reason:p.type
 });
 
 /* aggiorna matrice simulata */
+
+if(!matrix[day] || !matrix[day][time]) continue;
 
 const oldSlot = matrix[day][time];
 
