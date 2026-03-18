@@ -498,12 +498,16 @@ return {day,slot};
 
 /* try other day */
 
+if(DAYS.length > 1){
+
 const otherDay = day === DAYS[0] ? DAYS[1] : DAYS[0];
 
 for(const slot of SLOTS){
 
 if(isSlotAvailable(otherDay,slot,provider)){
 return {day:otherDay,slot};
+}
+
 }
 
 }
