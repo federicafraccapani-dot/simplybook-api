@@ -179,7 +179,7 @@ if(generate && clientId && serviceId && providerId){
 ========================= */
 
 if(rebalance && clientId && serviceId){
-  return rebalanceBookings(token, COMPANY_LOGIN, clientId, serviceId);
+  return rebalanceBookings(simplybook, token, COMPANY_LOGIN, clientId, serviceId);
 }
 
 /* =========================
