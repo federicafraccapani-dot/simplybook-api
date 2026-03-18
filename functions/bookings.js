@@ -331,7 +331,7 @@ async function rebalanceBookings(simplybook, token, COMPANY_LOGIN, clientId, ser
 
   const MAX_PER_SLOT = 15;
 
-  const excluded = new Set([14,40]);
+  const excluded = new Set([13,39]);
 
   /* =========================
      READ BOOKINGS
