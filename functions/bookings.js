@@ -320,7 +320,7 @@ async function rebalanceBookings(simplybook, token, COMPANY_LOGIN, clientId, ser
 const client = parseInt(clientId);
 const service = parseInt(serviceId);
 
-const DAYS = ["2026-04-18"];
+const DAYS = ["2026-04-18"]; 
 //const DAYS = ["2026-04-17","2026-04-18"];
 
 const SLOTS = [
@@ -387,10 +387,12 @@ function isSlotAvailable(day,slot,provider){
 
 const meetings = matrix[day][slot];
 
+if(!meetings) return false;
+
 if(meetings.length >= MAX_PER_SLOT) return false;
 
 for(const m of meetings){
-if(m.unit_id === provider) return false;
+if(String(m.unit_id) === String(provider)) return false;
 }
 
 return true;
@@ -398,12 +400,12 @@ return true;
 }
 
 /* =========================
-FIND ISSUES
+FIND PROBLEMS
 ========================= */
 
 const problems = [];
 
-/* overflow */
+/* overflow slot */
 
 for(const day of DAYS){
 
@@ -430,7 +432,7 @@ booking:m
 
 }
 
-/* consecutive */
+/* consecutive meetings */
 
 const byProvider = {};
 
@@ -481,12 +483,43 @@ booking:cur.booking
 }
 
 /* =========================
-FIND NEW SLOT
+FIND BEST SLOT
 ========================= */
 
 function findNewSlot(day,time,provider){
 
-/* try same day */
+const startIndex = slotIndex(time);
+
+/* prova slot vicini */
+
+for(let distance=1; distance<SLOTS.length; distance++){
+
+const before = startIndex - distance;
+const after = startIndex + distance;
+
+if(before >= 0){
+
+const slot = SLOTS[before];
+
+if(isSlotAvailable(day,slot,provider)){
+return {day,slot};
+}
+
+}
+
+if(after < SLOTS.length){
+
+const slot = SLOTS[after];
+
+if(isSlotAvailable(day,slot,provider)){
+return {day,slot};
+}
+
+}
+
+}
+
+/* fallback stesso giorno */
 
 for(const slot of SLOTS){
 
@@ -496,7 +529,7 @@ return {day,slot};
 
 }
 
-/* try other day */
+/* prova altro giorno */
 
 if(DAYS.length > 1){
 
@@ -545,8 +578,6 @@ reason:p.type
 
 /* aggiorna matrice simulata */
 
-/* rimuovi dallo slot originale */
-
 const oldSlot = matrix[day][time];
 
 for(let i=0;i<oldSlot.length;i++){
@@ -557,8 +588,6 @@ break;
 }
 
 }
-
-/* aggiungi al nuovo slot */
 
 matrix[target.day][target.slot].push({
 id:b.id,
@@ -576,6 +605,8 @@ bookings:bookings.length,
 problems:problems.length,
 actions
 });
+
+}
 
 }/* =========================
    JSON RESPONSE
