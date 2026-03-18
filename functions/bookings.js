@@ -179,7 +179,7 @@ if(generate && clientId && serviceId && providerId){
 ========================= */
 
 if(rebalance && clientId && serviceId && providerId){
-  return rebalanceBookings(token, serviceId, clientId, COMPANY_LOGIN);
+  return rebalanceBookings(token, clientId, serviceId, COMPANY_LOGIN);
 }
 
 /* =========================
@@ -315,7 +315,7 @@ async function generateBookings(token, serviceId, clientId, providerId, COMPANY_
    REBALANCE BOOKINGS
 ========================= */
 
-async function rebalanceBookings(token, clientId, serviceId){
+async function rebalanceBookings(token, clientId, serviceId, COMPANY_LOGIN){
 
   const client = parseInt(clientId);
   const service = parseInt(serviceId);
