@@ -315,31 +315,18 @@ async function generateBookings(token, serviceId, clientId, providerId, COMPANY_
    REBALANCE BOOKINGS
 ========================= */
 
-async function rebalanceBookings(token, serviceId, clientId, COMPANY_LOGIN){
+async function rebalanceBookings(token, clientId, serviceId){
 
   const client = parseInt(clientId);
   const service = parseInt(serviceId);
 
   const DAYS = ["2026-04-17","2026-04-18"];
 
-  const slots = [
-  "09:00","09:15","09:30","09:45",
-  "10:00","10:15","10:30","10:45",
-  "11:00","11:15","11:30","11:45",
-  "12:00","12:15","12:30","12:45"
-  ];
-
   const excluded = new Set([14,40]);
 
   const offsets = [0,15,30,45];
 
-  const bookings = await simplybook(
-    token,
-    "getBookings",
-    [{
-      client_id: client
-    }]
-  );
+  const baseHours = ["09:00","10:00","11:00","12:00"];
 
   function addMinutes(time,minutes){
     let [h,m]=time.split(":").map(Number);
@@ -349,13 +336,11 @@ async function rebalanceBookings(token, serviceId, clientId, COMPANY_LOGIN){
 
   function expectedSlots(provider,day){
 
-    const offsetIndex=(provider-1)%4;
+    const offsetIndex = (provider-1)%4;
 
     const offset = day==="2026-04-17"
       ? offsets[offsetIndex]
       : offsets[3-offsetIndex];
-
-    const baseHours=["09:00","10:00","11:00","12:00"];
 
     const result=[];
 
@@ -363,7 +348,7 @@ async function rebalanceBookings(token, serviceId, clientId, COMPANY_LOGIN){
       result.push(addMinutes(base,offset));
     }
 
-    const extra = provider%2===0;
+    const extra = provider % 2 === 0;
 
     if((day==="2026-04-17" && extra) ||
        (day==="2026-04-18" && !extra)){
@@ -376,29 +361,93 @@ async function rebalanceBookings(token, serviceId, clientId, COMPANY_LOGIN){
 
   }
 
-  const actions=[];
+  /* =========================
+     LEGGI BOOKING
+  ========================= */
 
-  for(const providerBooking of bookings){
+  const allBookings = await simplybook(
+    token,
+    "getBookings",
+    [{ client_id: client }]
+  );
 
-    const provider = providerBooking.unit_id;
+  const bookings = allBookings
+    .filter(b => String(b.event_id) === String(service))
+    .filter(b => !excluded.has(parseInt(b.unit_id)));
 
-    if(excluded.has(provider)) continue;
+  /* =========================
+     ORGANIZZA PER PROVIDER
+  ========================= */
 
-    const day = providerBooking.start_date.substring(0,10);
+  const byProvider = {};
 
-    const time = providerBooking.start_date.substring(11,16);
+  for(const b of bookings){
 
-    const expected = expectedSlots(provider,day);
+    const provider = parseInt(b.unit_id);
 
-    if(!expected.includes(time)){
+    if(!byProvider[provider]){
+      byProvider[provider] = [];
+    }
 
-      actions.push({
-        type:"move",
-        booking:providerBooking.id,
-        provider,
-        current:time,
-        expected
-      });
+    byProvider[provider].push(b);
+
+  }
+
+  const actions = [];
+
+  /* =========================
+     CONTROLLO SLOT
+  ========================= */
+
+  for(const provider in byProvider){
+
+    const providerBookings = byProvider[provider];
+
+    for(const day of DAYS){
+
+      const expected = expectedSlots(parseInt(provider),day);
+
+      const current = providerBookings
+        .filter(b => b.start_date.startsWith(day))
+        .map(b => b.start_date.substring(11,16));
+
+      /* slot mancanti */
+
+      for(const slot of expected){
+
+        if(!current.includes(slot)){
+
+          actions.push({
+            type:"create",
+            provider:parseInt(provider),
+            day,
+            slot
+          });
+
+        }
+
+      }
+
+      /* slot errati */
+
+      for(const b of providerBookings.filter(x => x.start_date.startsWith(day))){
+
+        const time = b.start_date.substring(11,16);
+
+        if(!expected.includes(time)){
+
+          actions.push({
+            type:"move",
+            booking:b.id,
+            provider:parseInt(provider),
+            day,
+            current:time,
+            expected
+          });
+
+        }
+
+      }
 
     }
 
@@ -408,6 +457,7 @@ async function rebalanceBookings(token, serviceId, clientId, COMPANY_LOGIN){
     client,
     service,
     bookings:bookings.length,
+    providers:Object.keys(byProvider).length,
     actions
   });
 
