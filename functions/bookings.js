@@ -320,7 +320,8 @@ async function rebalanceBookings(simplybook, token, COMPANY_LOGIN, clientId, ser
 const client = parseInt(clientId);
 const service = parseInt(serviceId);
 
-const DAYS = ["2026-04-17","2026-04-18"];
+const DAYS = ["2026-04-18"];
+//const DAYS = ["2026-04-17","2026-04-18"];
 
 const SLOTS = [
 "09:00","09:15","09:30","09:45",
