@@ -315,7 +315,7 @@ async function generateBookings(token, serviceId, clientId, providerId, COMPANY_
    REBALANCE BOOKINGS
 ========================= */
 
-async function rebalanceBookings(token, COMPANY_LOGIN, clientId, serviceId){
+async function rebalanceBookings(simplybook, token, COMPANY_LOGIN, clientId, serviceId){
 
    console.log("REBALANCE START!");
    //return json({test:"rebalance running"});
