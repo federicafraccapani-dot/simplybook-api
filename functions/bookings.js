@@ -83,46 +83,84 @@ const token = await getToken();
    PROVIDER AVAILABILITY
 ========================= */
 
+
 if(providerAvailability){
 
-  const SERVICE_ID = 2;
-  const DATE_FROM = "2026-04-17";
-  const DATE_TO = "2026-04-18";
+  const SERVICE_AGENCIES = 6;
+  const SERVICE_CORPORATE = 7;
 
-  const matrix = await simplybook(
-    token,
-    "getCartesianStartTimeMatrix",
-    [
-      DATE_FROM,
-      DATE_TO,
-      SERVICE_ID,
-      [],
-      1,
-      null,
-      []
-    ]
-  );
+  const DATE_AGENCIES = "2027-02-05";
+  const DATE_CORPORATE = "2027-02-06";
+
+  const [matrixAgencies, matrixCorporate] = await Promise.all([
+
+    simplybook(
+      token,
+      "getCartesianStartTimeMatrix",
+      [
+        DATE_AGENCIES,
+        DATE_AGENCIES,
+        SERVICE_AGENCIES,
+        [],
+        1,
+        null,
+        []
+      ]
+    ),
+
+    simplybook(
+      token,
+      "getCartesianStartTimeMatrix",
+      [
+        DATE_CORPORATE,
+        DATE_CORPORATE,
+        SERVICE_CORPORATE,
+        [],
+        1,
+        null,
+        []
+      ]
+    )
+
+  ]);
 
   const result = {};
 
-  (matrix || []).forEach(provider => {
+  (matrixAgencies || []).forEach(provider => {
 
-    const timeslots = provider.timeslots || {};
-
-    const fri = (timeslots["2026-04-17"] || []).length;
-    const sat = (timeslots["2026-04-18"] || []).length;
+    const fri = (provider.timeslots?.[DATE_AGENCIES] || []).length;
 
     result[provider.provider_id] = {
       fri,
-      sat,
-      total: fri + sat
+      sat: 0,
+      total: fri
     };
+
+  });
+
+  (matrixCorporate || []).forEach(provider => {
+
+    const sat = (provider.timeslots?.[DATE_CORPORATE] || []).length;
+
+    const id = provider.provider_id;
+
+    if(!result[id]){
+      result[id] = {
+        fri: 0,
+        sat: 0,
+        total: 0
+      };
+    }
+
+    result[id].sat = sat;
+    result[id].total = result[id].fri + sat;
 
   });
 
   return json(result);
 
 }
+
 
 /* =========================
    DEBUG (SERVICES + CLIENTS)
